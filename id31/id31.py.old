@@ -1,0 +1,176 @@
+#!/usr/bin/env python
+
+# def make_tree(t, wanted, vlist):
+    # if wanted == 0:
+        # return
+    # next = [v for v in vlist if (wanted - v) >= 0]
+    # if (next == []):
+        # return
+    # t['leaves'] = []
+    # for i, v in enumerate(next):
+        # t['leaves'].append({'value':v, 'leaves':None})
+        # make_tree(t['leaves'][i], wanted - v, vlist)
+    # return
+
+# def flatten(t):
+    # if t['leaves'] == None:
+        # return [[t['value']]]
+        
+    # ft = []
+    # for i, tl in enumerate(t['leaves']):
+        # for lv in flatten(tl):
+            # ft.append([t['value']] + lv)
+    
+    # return ft
+
+# t = {'value':0, 'leaves':None}
+# vlist = [1,2,5,10,20,50,100,200]
+
+# make_tree(t, 20, vlist)
+
+# print t
+# s = set([])
+# for l in flatten(t):
+    # l.sort()
+    # s.add(tuple(l))
+
+# print len(s)
+
+# for el in s:
+    # print el
+
+# def combo(wanted, vlist):
+    # if len(vlist) == 1:
+        # return [[wanted / vlist[0]]]
+    
+    # # print wanted, vlist
+    # b = best_change(wanted, vlist)
+    # l = [b]
+    # for i,v in enumerate(b):
+        # if v != 0 and i != 0:
+            # # print v, vlist[:i], b[i:], i
+            # for j in xrange(1,v+1):
+                # for r in combo(vlist[i]*j, vlist[:i]):
+                    # s = r + b[i:]
+                    # s[i] -= j;
+                    # l.append(s)
+    # return l
+
+# # # def elim(c, vlist, i):
+    # # # if (c[i] == 0):
+        # # # return [list(c)]
+    # # # l = []
+    # # # for j in xrange(0,c[i]):
+        # # # b = best_change(vlist[i]*(j+1), vlist[:i])
+        # # # l.append(list(c))
+        # # # # print b, j
+        # # # l[j][i] -= (j+1)
+        # # # for k,bv in enumerate(b):
+            # # # l[j][k] += bv
+    # # # return l
+
+# # # def elim_r(c, vlist, i):
+    # # # ls = elim(c,vlist,i)
+    # # # q = []
+    # # # for cl in ls:
+        # # # q.append(cl)
+        # # # s = list(cl)
+        # # # s.reverse()
+        # # # for i,sv in enumerate(s):
+            # # # if sv != 0:
+                # # # e = len(cl)-i-1
+                # # # if e == i:
+                    # # # continue
+                # # # elif e != 0:
+                    # # # rl = elim_r(cl,vlist,e)
+                    # # # for elem in rl:
+                        # # # q.append(elem)
+                    # # # break
+        
+    # # # return q
+    
+# # # def combo(wanted, vlist):
+    # # # if len(vlist) == 1:
+        # # # return [[wanted / vlist[0]]]
+    
+    # # # # print wanted, vlist
+    # # # b = best_change(wanted, vlist)
+    # # # s = list(b)
+    # # # s.reverse()
+    # # # l = []
+    # # # for i,sv in enumerate(s):
+        # # # if sv != 0:
+            # # # e = len(b)-i-1
+            # # # for li in elim(b, vlist, e):
+                # # # print vlist[i]
+        
+    # # # return l
+    
+# # # def best_change(wanted, vlist):
+    # # # a = wanted
+    # # # b = (len(vlist))*[0]
+    # # # while a != 0:
+        # # # for i,v in enumerate(sorted(vlist, reverse=True)):
+            # # # if v <= a:
+                # # # a -= v;
+                # # # b[len(vlist)-i-1] += 1
+                # # # break
+    # # # return b
+    
+    
+# # # # vlist = [1,2,5,10,20,50,100,200]
+# # # vlist = [1,5,10,25,50,100]
+
+# # # c = elim_r([0,0,0,1], [1,5,10,25], 3)
+# # # for x in c:
+    # # # print x
+    
+# # # print len(c)
+
+#def inc(cc, dec_idx, inc_idx, vlist):
+#    c = list(cc)
+#    if c[dec_idx] >= vlist[inc_idx]:
+#        c[inc_idx] += 1
+#        c[dec_idx] -= vlist[inc_idx]
+#        return c
+#    else:
+#        return []
+
+#def inc_r(cc, dec_idx, inc_idx, vlist):
+#        
+#vlist = [1,2,5,10,20,50,100,200]
+#v_start = [200,0,0,0,0,0,0,0]
+
+#c = v_start
+#while (c) != []:
+#    c = inc(c, 0, 1, vlist)
+#    print c
+
+s = set()
+
+def print_combo_lines_r(clist, vlist, want, prepend):
+    if (want == 0):
+        print prepend
+        s.add(prepend)
+        return
+
+    if (want < 0):
+        return
+
+    for i,v in enumerate(vlist):
+        prepend[i] = prepend[i] + 1
+        print_combo_lines_r(clist, vlist, want - v, prepend)
+        prepend[i] = prepend[i] - 1 
+
+    return
+
+def print_combo_lines(clist, vlist, want):
+    print_combo_lines_r(clist, vlist, want, [0,0,0,0,0,0])
+    return
+
+clist = ['p', 'n', 'd', 'q', 'h', '$']
+vlist = [1,5,10,25,50,100]
+
+print_combo_lines(clist, vlist, 25)
+print s
+

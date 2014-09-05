@@ -1,0 +1,174 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+#define IDX_X(n) (2*(n))
+#define IDX_Y(n) (2*(n)+1)
+
+#define FIDX_X(n) (3*(n)+0)
+#define FIDX_Y(n) (3*(n)+1)
+#define FIDX_THETA(n) (3*(n)+2)
+
+int ptcmp_angle(const void *a, const void * b)
+{
+    double *ela = (double *)a;
+    double *elb = (double *)b;
+    double r = (ela[FIDX_THETA(0)] - elb[FIDX_THETA(0)]);
+
+    if (r < 0) {
+        return -1;
+    } else if (r == 0) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+double *verts_unit_circle_projection(int *verts, int num_vertices)
+{
+    double *dverts;
+    double r, theta;
+    int i;
+    double x, y;
+
+    dverts = malloc(3 * sizeof(double) * num_vertices);
+
+    for (i = 0; i < num_vertices; i++) {
+        x = (double)verts[IDX_X(i)];
+        y = (double)verts[IDX_Y(i)];
+        r = hypot(x,y);
+        theta = atan2(y,x);
+        if (r == 0) {
+            dverts[FIDX_X(i)] = 0.0;
+            dverts[FIDX_Y(i)] = 0.0;
+            dverts[FIDX_THETA(i)] = 0.0;
+        } else {
+            dverts[FIDX_X(i)] = x / r;
+            dverts[FIDX_Y(i)] = y / r;
+            dverts[FIDX_THETA(i)] = theta + M_PI; /* theta range from [0,2pi) */
+        }
+    }
+
+    /* sort by angle */
+    qsort(dverts, num_vertices, 3 * sizeof(double), ptcmp_angle);
+
+    return dverts;
+}
+
+int idx_nn_theta_less_than(double theta_max, double *dverts, int num_vertices)
+{
+    size_t imin;
+    size_t imax;
+    size_t imid;
+
+    imin = 0;
+    imax = num_vertices;
+
+    while ((imax - imin) > 1) {
+        imid = imin + (imax - imin) / 2;
+        if (dverts[FIDX_THETA(imid)] > theta_max) {
+            imax = imid;
+        } else {
+            imin = imid;
+        }
+    }
+
+    return imin;
+}
+
+int *generate_n_yk(double *ucverts, int num_vertices)
+{
+    int *n_yk_array;
+    int i;
+    int j;
+    double current_theta;
+
+    n_yk_array = (int *)malloc(sizeof(int) * num_vertices);
+
+    for (i = 0; i < num_vertices; i++) {
+        n_yk_array[i] = 0;
+        current_theta = ucverts[FIDX_THETA(i)];
+        if (current_theta >= M_PI) {
+            n_yk_array[i] += (num_vertices - i);
+            n_yk_array[i] += idx_nn_theta_less_than(current_theta - M_PI, ucverts, num_vertices) + 1;
+        } else {
+            n_yk_array[i] += idx_nn_theta_less_than(current_theta + M_PI, ucverts, num_vertices) - i + 1;
+        }
+    }
+
+    return n_yk_array;
+}
+
+int twice_tri_area(int ax, int ay, int bx, int by, int cx, int cy)
+{
+    int dbcy = by - cy;
+    int dcay = cy - ay;
+    int daby = ay - by;
+
+    int twice_A = abs(ax * dbcy + bx * dcay + cx * daby);
+    return twice_A;
+}
+
+int tri_contains_origin(int ax, int ay, int bx, int by, int cx, int cy)
+{
+    int twice_abc = twice_tri_area(ax,ay,bx,by,cx,cy);
+    int twice_bcp = twice_tri_area(0,0,bx,by,cx,cy);
+    int twice_acp = twice_tri_area(ax,ay,0,0,cx,cy);
+    int twice_abp = twice_tri_area(ax,ay,bx,by,0,0);
+
+    return (twice_abc == (twice_abp + twice_acp + twice_bcp));
+}
+
+int *read_vertices(char *filename, int num_vertices)
+{
+    FILE *f;
+    int *verts;
+    int i;
+
+    f = fopen(filename, "r");
+
+    /* each vert has contiguous x,y components */
+    verts = (int *)malloc(2 * sizeof(int) * num_vertices);
+
+    for(i = 0; i < num_vertices; i++) {
+        fscanf(f, "%d,%d", &verts[IDX_X(i)], &verts[IDX_Y(i)]);
+    }
+    return verts;
+}
+
+int main(int argc, char **argv)
+{
+    int *verts;
+    int *n_yk;
+    double *unit_circle_verts;
+/*    int num_vertices = 2000000;*/
+/*    int num_vertices = 600;*/
+    int num_vertices = 8;
+    int i,j,k;
+    long nv = (long) * num_vertices;
+    long counter = (2 * nv - 3) * (nv - 1) * (nv - 2) / 12;
+
+    char vertfilename[255];
+    sprintf(vertfilename, "vertices_%d.txt", num_vertices);
+    
+    verts = read_vertices(vertfilename, num_vertices);
+    unit_circle_verts = verts_unit_circle_projection(verts, num_vertices);
+    for(i = 0; i < num_vertices; i++) {
+        printf("theta=%g,x=%g,y=%g\n", unit_circle_verts[FIDX_THETA(i)], unit_circle_verts[FIDX_X(i)], unit_circle_verts[FIDX_Y(i)]);
+    }
+    printf("Done reading vertices.\n");
+    n_yk = generate_n_yk(unit_circle_verts, num_vertices);
+    for(i = 0; i < num_vertices; i++) {
+        printf("n[y_%d]=%d\n", i, n_yk[i]);
+    }
+    printf("Done generating n_yk.\n");
+
+    for (i = 0; i < num_vertices; i++) {
+        
+        printf("\r%d/%d", i, num_vertices);
+        fflush(stdout);
+    }
+    printf("\nDone, counter=%ld.\n", counter);
+
+    return 0;
+}
