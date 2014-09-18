@@ -3,22 +3,29 @@
 def sum_sq_digits(n):
     return sum(map(lambda x: int(x)**2, list(str(n))))
 
-goes_to_1 = set([1])
-goes_to_89 = set([89])
-
 lim = 10 ** 7
 
+eightynines = [False]*(1+lim)
+eightynines[89] = True
+ones = [False]*(1+lim)
+ones[1] = True
+
 for x in range(1, 1 + lim):
+    if eightynines[x] or ones[x]:
+        continue
+
     l = [x]
     while True:
-        if x in goes_to_89:
-            goes_to_89 |= set(l)
+        if eightynines[x]:
+            for y in l:
+                eightynines[y] = True
             break
-        elif x in goes_to_1:
-            goes_to_1 |= set(l)
+        elif ones[x]:
+            for y in l:
+                ones[y] = True
             break
         else:
             x = sum_sq_digits(x)
             l.append(x)
 
-print len(goes_to_89)
+print sum([1 for x in eightynines if x]) 
