@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import math
+from bisect import bisect_left, bisect_right
 lim = 10 ** 7
 
 def prime_sieve(upto):
@@ -44,56 +45,81 @@ def totient(n):
 
     return (num / den)
 
-primes = prime_sieve(lim)[::-1] #start with largest primes first
+primes = prime_sieve(lim)
 print 'Done generating primes.'
-#for d in xrange(1+lim, 2, -1):
-#m = 1000
-#for d in range(2, 1+lim):
-#    c = totient(d)
-#    if (tuple(sorted(str(c))) == tuple(sorted(str(d)))):
-#        if (float(d) / float(c) < m):
-#            m = float(d) / float (c)
-#            print c, d, m
 
-def test(n):
-    if (len(n) == 0):
-        return False
-    prod = reduce(lambda x,y: x*y, n, 1)
-    print n
-    if (prod > lim):
-        return False
-    pf = list(set(n))
-    t = (prod * reduce(lambda x, y: x*(y-1), pf, 1)) / reduce(lambda x, y: x*y, pf, 1)
-    f = tuple(sorted(str(prod))) == tuple(sorted(str(t)))
-    if f:
-        print prod, t
-    return f
+def pftotient(pl):
+    pf = list(set(pl))
+    n = reduce(lambda x, y: x*y, pl, 1)
+    num = n * reduce(lambda x, y: x*(y-1), pf, 1)
+    den = reduce(lambda x, y: x*y, pf, 1)
+    return (num / den)
 
-def test_number(maxdepth, func, plist, depth=1, current=[]):
-    if (depth > maxdepth or plist == []):
-        return False
-    
-    #if func(current):
-    #    return True
+def totient_factor(p):
+    return float(p) / float(p-1)
 
-    if (current != []):
-        partial_prod = reduce(lambda x,y: x*y, current, 1)
-        i = 1
-        p = plist[-i]
-        while p*partial_prod < lim:
-            p = plist[-i]
-            i += 1
+def is_totient_permuation(pl):
+    n = reduce(lambda x, y: x*y, pl, 1)
+    return (sorted(str(n)) == sorted(str(pftotient(pl))))
+
+totients = map(totient_factor, primes)
+
+gbest = max(primes)
+
+def bandb(upper, lower, current, lim, plist, best=None, tc=None):
+    global gbest
+    if (tc is not None and tc >= gbest):
+        return None        
+
+    if current == [] or current is None:
+        n = 1
+        c = []
     else:
-        i = 0
-    for n in plist[-i:]:
-        c = list(current)
-        c.append(n)
-        if (func(c) or test_number(maxdepth, func, plist, depth+1, c)):
-            return True
-    
-    return False
+        n = reduce(lambda x,y: x*y, current, 1)
+        c = current
 
-for d in range(1,4):
-    # fp = filter(lambda p: p ** d < lim, primes)
-    if (test_number(d, test, primes)):
-        break
+    if (upper is None or lower is None):
+        li = 0
+        ui = len(plist)-1
+    else:
+        if (upper <= lower):
+            return None
+        
+        li = bisect_left(plist, lower)
+        ui = bisect_right(plist, upper)
+        if (ui >= len(plist)):
+            ui = len(plist) - 1
+
+        if (ui <= li):
+            return None
+
+    i = ui
+    if tc is None:
+        tc = 1
+    else:
+        while (tc*totients[li] > gbest and li < i):
+            li += 1
+
+    while i >= li:
+        while (n*plist[i] > lim and i >= li):
+            i -= 1
+        if (i < li):
+            break
+        cc = list(c)
+        cc.append(plist[i])
+        # print cc, tc, tc+totients[i], best
+        # print cc
+        if is_totient_permuation(cc):
+            t = float(n*plist[i]) / float(pftotient(cc))
+            if (t < gbest):
+                gbest = t
+                print n*plist[i], cc, t, gbest
+                while (tc*totients[li] > gbest and li < i):
+                    li += 1
+            i -= 1
+        else:
+            i -= 1
+        if (tc*totients[i] < gbest):
+            bandb(lim / (n*plist[i]), 0, cc, lim, plist, gbest, tc*totients[i])
+
+bandb(None, None, [], lim, primes)
