@@ -17,5 +17,5 @@ for k in d:
         best = k
         ab = abs(2*10**6 - d[k])
 
-print best, ab, d[best]
+print best, ab, d[best], best[0]*best[1]
 
