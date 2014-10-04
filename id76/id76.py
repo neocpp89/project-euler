@@ -3,6 +3,29 @@ import sys
 
 # turns out this is sequence A000065 (-1 + partitions of n)
 
+def partition_function(n,known={}):
+    if (n == 0):
+        known[n] = 1
+        return 1
+    if (n < 0):
+        return 0
+    s = 0
+    for k in range(1,n+1):
+        leftn = n - (k*(3*k-1))/2
+        rightn = n - (k*(3*k+1))/2
+        if leftn in known:
+            left = known[leftn]
+        else:
+            left = partition_function(leftn, known)
+        if rightn in known:
+            right = known[rightn]
+        else:
+            right = partition_function(rightn, known)
+        s += ((-1)**(k+1) * (left + right))
+    if n not in known:
+        known[n] = s
+    return s
+
 def howtomake(n, known=None):
     if (known is not None and n in known):
         return known[n]
@@ -40,4 +63,6 @@ def numwaystomake(val, possible, known=None):
     s = numwaystomake(val, possible[:-1]) + numwaystomake(val - possible[-1], possible)
     return s 
 
-print numwaystomake(q, range(1, q))
+# dont include 'q + 0'
+print partition_function(q)-1
+#print numwaystomake(q, range(1, q))
